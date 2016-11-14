@@ -33,7 +33,11 @@ module Webpack
             # Can be either a string or an array of strings.
             # Do not include source maps as they are not javascript
             [paths].flatten.reject { |p| p =~ /.*\.map$/ }.map do |p|
-              "/#{::Rails.configuration.webpack.public_path}/#{p}"
+              if public_path_absolute_url?
+                "#{::Rails.configuration.webpack.public_path}/#{p}"
+              else
+                "/#{::Rails.configuration.webpack.public_path}/#{p}"
+              end
             end
           else
             raise EntryPointMissingError, "Can't find entry point '#{source}' in webpack manifest"
@@ -41,6 +45,10 @@ module Webpack
         end
 
         private
+
+        def public_path_absolute_url?
+          URI.parse(::Rails.configuration.webpack.public_path).absolute?
+        end
 
         def manifest_bundled?
           !manifest["errors"].any? { |error| error.include? "Module build failed" }
